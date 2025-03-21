@@ -9,10 +9,18 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.evetbuspatt.adapters.OnClickListener
+import com.example.evetbuspatt.adapters.ResultAdapter
+import com.example.evetbuspatt.dataAccess.getAdEventsInRealtime
+import com.example.evetbuspatt.dataAccess.getResultEventsInRealtime
+import com.example.evetbuspatt.dataAccess.someTime
 import com.example.evetbuspatt.databinding.ActivityMainBinding
+import com.example.evetbuspatt.eventBus.EventBus
+import com.example.evetbuspatt.eventBus.SportEvent
+import com.example.evetbuspatt.services.SportService
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 class MainActivity : AppCompatActivity(), OnClickListener {
     private lateinit var binding: ActivityMainBinding
@@ -67,11 +75,25 @@ class MainActivity : AppCompatActivity(), OnClickListener {
 
     private fun setupSubscribers() {
         lifecycleScope.launch {
+            SportService.instance().setupSubscribers(this)
             EventBus.instance().subscribe<SportEvent> { event ->
                 binding.srlResults.isRefreshing = false
                 when (event) {
                     is SportEvent.ResultSuccess ->
                         adapter.add(event)
+
+                    is SportEvent.ResultError ->
+                        Snackbar.make(
+                            binding.root,
+                            "Code ${event.code}, Message: ${event.msg} ",
+                            Snackbar.LENGTH_LONG
+                        ).show()
+
+                    is SportEvent.SaveEvent -> Toast.makeText(
+                        this@MainActivity,
+                        "Guardado exitosamente",
+                        Toast.LENGTH_SHORT
+                    ).show()
 
                     is SportEvent.AdEvent ->
                         Toast.makeText(
@@ -82,6 +104,7 @@ class MainActivity : AppCompatActivity(), OnClickListener {
 
                     is SportEvent.ClosedAdEvent ->
                         binding.btnAd.visibility = View.GONE
+
                     else -> {}
                 }
             }
@@ -127,6 +150,10 @@ class MainActivity : AppCompatActivity(), OnClickListener {
 
     //OnClickListener interface
     override fun onClick(result: SportEvent.ResultSuccess) {
-
+        binding.srlResults.isRefreshing = true
+        lifecycleScope.launch {
+            //EventBus.instance().publish(SportEvent.SaveEvent)
+            SportService.instance().saveResult(result)
+        }
     }
 }
