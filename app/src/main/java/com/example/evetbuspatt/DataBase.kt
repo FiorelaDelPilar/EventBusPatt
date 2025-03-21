@@ -1,5 +1,7 @@
 package com.example.evetbuspatt
 
+import kotlin.random.Random
+
 fun getResultEventsInRealtime() = listOf(
     SportEvent.ResultSuccess(1, "Fútbol", listOf("Italia", "Perú", "Corea del Sur")),
     SportEvent.ResultSuccess(
@@ -20,3 +22,5 @@ fun getAdEventsInRealtime() = listOf(
     SportEvent.AdEvent,
     SportEvent.AdEvent
 )
+
+fun someTime(): Long = Random.nextLong(500, 2000)
